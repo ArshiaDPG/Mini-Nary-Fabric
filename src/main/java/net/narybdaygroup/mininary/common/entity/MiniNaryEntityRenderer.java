@@ -5,15 +5,10 @@ import net.minecraft.client.render.entity.MobEntityRenderer;
 import net.minecraft.util.Identifier;
 import net.narybdaygroup.mininary.MiniNary;
 import net.narybdaygroup.mininary.client.MiniNaryClient;
+import software.bernie.geckolib3.renderers.geo.GeoEntityRenderer;
 
-public class MiniNaryEntityRenderer extends MobEntityRenderer<MiniNaryEntity, MiniNaryEntityModel> {
-
-    public MiniNaryEntityRenderer(EntityRendererFactory.Context context) {
-        super(context, new MiniNaryEntityModel(context.getPart(MiniNaryClient.MINI_NARY_LAYER)), 0.5f);
-    }
-
-    @Override
-    public Identifier getTexture(MiniNaryEntity entity) {
-        return new Identifier(MiniNary.MOD_ID, "textures/entity/cube/cube.png");
+public class MiniNaryEntityRenderer extends GeoEntityRenderer<MiniNaryEntity> {
+    public MiniNaryEntityRenderer(EntityRendererFactory.Context renderManager) {
+        super(renderManager, new MiniNaryEntityModel());
     }
 }

@@ -1,26 +1,71 @@
 package net.narybdaygroup.mininary.common.entity;
 
+import net.minecraft.block.BlockState;
+import net.minecraft.entity.EntityDimensions;
+import net.minecraft.entity.EntityPose;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.Flutterer;
+import net.minecraft.entity.ai.control.MoveControl;
+import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.attribute.DefaultAttributeContainer;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.passive.AnimalEntity;
-import net.minecraft.entity.passive.PassiveEntity;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
-import org.jetbrains.annotations.Nullable;
+import software.bernie.geckolib3.core.IAnimatable;
+import software.bernie.geckolib3.core.IAnimationTickable;
+import software.bernie.geckolib3.core.PlayState;
+import software.bernie.geckolib3.core.builder.AnimationBuilder;
+import software.bernie.geckolib3.core.controller.AnimationController;
+import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
+import software.bernie.geckolib3.core.manager.AnimationData;
+import software.bernie.geckolib3.core.manager.AnimationFactory;
 
-public class MiniNaryEntity extends AnimalEntity implements Flutterer {
+import java.util.EnumSet;
 
-    public MiniNaryEntity(EntityType<? extends AnimalEntity> entityType, World world) {
+public class MiniNaryEntity extends PathAwareEntity implements Flutterer, IAnimatable, IAnimationTickable {
+
+    public static final int field_28637 = MathHelper.ceil(2.4166098F);
+    private AnimationFactory factory = new AnimationFactory(this);
+    public static String textureExtender;
+
+    public MiniNaryEntity(EntityType<? extends PathAwareEntity> entityType, World world) {
         super(entityType, world);
+        this.experiencePoints = 7;
+        this.moveControl = new MiniNaryEntity.MiniNaryMoveControl(this);
+        this.textureExtender = Types.randomizeExtension(world.getRandom());
+
     }
+
+    public String getExtension() {
+        return this.textureExtender;
+    }
+    public boolean canAvoidTraps() {
+        return true;
+    }
+    public boolean hasWings() {
+        return this.age % field_28637 == 0;
+    }
+    protected void initGoals() {
+        this.goalSelector.add(5, new MiniNaryEntity.FlyRandomlyGoal(this));
+    }
+
     public static DefaultAttributeContainer.Builder createMiniNaryAttributes() {
         return MobEntity.createMobAttributes().add(EntityAttributes.GENERIC_MAX_HEALTH, 10.0D).add(EntityAttributes.GENERIC_FLYING_SPEED, 0.6000000238418579D).add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.30000001192092896D).add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 2.0D).add(EntityAttributes.GENERIC_FOLLOW_RANGE, 48.0D);
+    }
+    public boolean handleFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
+        return false;
+    }
+    protected float getActiveEyeHeight(EntityPose pose, EntityDimensions dimensions) {
+        return 0.6F;
     }
     protected SoundEvent getAmbientSound() {
         return null;
@@ -37,14 +82,136 @@ public class MiniNaryEntity extends AnimalEntity implements Flutterer {
     protected float getSoundVolume() {
         return 0.4F;
     }
+
+    @Override
+    protected void fall(double heightDifference, boolean onGround, BlockState state, BlockPos landedPosition) {
+    }
     @Override
     public boolean isInAir() {
         return !this.onGround;
     }
 
-    @Nullable
-    @Override
-    public PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
-        return null;
+    boolean isWithinDistance(BlockPos pos, int distance) {
+        return pos.isWithinDistance(this.getBlockPos(), distance);
     }
+
+
+    @Override
+    public void registerControllers(AnimationData data) {
+        data.addAnimationController(new AnimationController<MiniNaryEntity>(this, "controller", 0, this::predicate));
+    }
+    private <E extends IAnimatable> PlayState predicate(AnimationEvent<E> event) {
+        if (event.isMoving()) {
+            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.mini_nary.fly", true));
+        }
+        else{
+            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.mini_nary.idle", true));
+        }
+
+        return PlayState.CONTINUE;
+    }
+
+    @Override
+    public AnimationFactory getFactory() {
+        return this.factory;
+    }
+
+    @Override
+    public int tickTimer() {
+        return 0;
+    }
+
+
+    static class MiniNaryMoveControl extends MoveControl {
+        private final MiniNaryEntity nary;
+        private int collisionCheckCooldown;
+
+        public MiniNaryMoveControl(MiniNaryEntity nary) {
+            super(nary);
+            this.nary = nary;
+        }
+
+        public void tick() {
+            if (this.state == MoveControl.State.MOVE_TO) {
+                if (this.collisionCheckCooldown-- <= 0) {
+                    this.collisionCheckCooldown += this.nary.getRandom().nextInt(5) + 2;
+                    Vec3d vec3d = new Vec3d(this.targetX - this.nary.getX(), this.targetY - this.nary.getY(), this.targetZ - this.nary.getZ());
+                    double d = vec3d.length();
+                    vec3d = vec3d.normalize();
+                    if (this.willCollide(vec3d, MathHelper.ceil(d))) {
+                        this.nary.setVelocity(this.nary.getVelocity().add(vec3d.multiply(0.1)));
+                    } else {
+                        this.state = MoveControl.State.WAIT;
+                    }
+                }
+
+            }
+        }
+
+        private boolean willCollide(Vec3d direction, int steps) {
+            Box box = this.nary.getBoundingBox();
+
+            for(int i = 1; i < steps; ++i) {
+                box = box.offset(direction);
+                if (!this.nary.world.isSpaceEmpty(this.nary, box)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    }
+
+    private static class FlyRandomlyGoal extends Goal {
+        private final MiniNaryEntity nary;
+
+        public FlyRandomlyGoal(MiniNaryEntity nary) {
+            this.nary = nary;
+            this.setControls(EnumSet.of(Goal.Control.MOVE));
+        }
+
+        public boolean canStart() {
+            MoveControl moveControl = this.nary.getMoveControl();
+            if (!moveControl.isMoving()) {
+                return true;
+            } else {
+                double d = moveControl.getTargetX() - this.nary.getX();
+                double e = moveControl.getTargetY() - this.nary.getY();
+                double f = moveControl.getTargetZ() - this.nary.getZ();
+                double g = d * d + e * e + f * f;
+                return g < 1.0 || g > 3600.0;
+            }
+        }
+
+        public boolean shouldContinue() {
+            return false;
+        }
+
+        public void start() {
+            Random random = this.nary.getRandom();
+            double d = this.nary.getX() + (double)((random.nextFloat() * 2.0F - 1.0F) * 16.0F);
+            double e = this.nary.getY() + (double)((random.nextFloat() * 2.0F - 1.0F) * 16.0F);
+            double f = this.nary.getZ() + (double)((random.nextFloat() * 2.0F - 1.0F) * 16.0F);
+            this.nary.getMoveControl().moveTo(d, e, f, 1.0);
+        }
+    }
+}
+enum Types {
+    NARY("nary"),
+    MARY("mary"),
+    TALON("talon");
+
+
+    private final String identifier;
+    Types(String identifier){
+        this.identifier = identifier;
+    }
+
+
+
+    public static String randomizeExtension(Random random){
+        Types[] directions = values();
+        return directions[random.nextInt(directions.length)].identifier;
+    }
+
 }

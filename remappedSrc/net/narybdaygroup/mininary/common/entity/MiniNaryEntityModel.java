@@ -6,31 +6,41 @@ import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.entity.model.EntityModel;
 import net.minecraft.client.render.entity.model.EntityModelPartNames;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.util.Identifier;
+import net.narybdaygroup.mininary.MiniNary;
+import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
+import software.bernie.geckolib3.core.processor.IBone;
+import software.bernie.geckolib3.model.AnimatedTickingGeoModel;
+import software.bernie.geckolib3.model.provider.data.EntityModelData;
 
-public class MiniNaryEntityModel  extends EntityModel<MiniNaryEntity> {
+public class MiniNaryEntityModel extends AnimatedTickingGeoModel<MiniNaryEntity> {
 
-    private final ModelPart base;
+    @SuppressWarnings({ "unchecked", "unused", "rawtypes" })
+    @Override
+    public void setLivingAnimations(MiniNaryEntity entity, Integer uniqueID, AnimationEvent customPredicate) {
+        super.setLivingAnimations(entity, uniqueID, customPredicate);
+        IBone head = this.getAnimationProcessor().getBone("head");
 
-    public MiniNaryEntityModel(ModelPart modelPart) {
-        this.base = modelPart.getChild(EntityModelPartNames.CUBE);
-    }
-
-    public static TexturedModelData getTexturedModelData() {
-        ModelData modelData = new ModelData();
-        ModelPartData modelPartData = modelData.getRoot();
-        modelPartData.addChild(EntityModelPartNames.CUBE, ModelPartBuilder.create().uv(0, 0).cuboid(-6F, 12F, -6F, 12F, 12F, 12F), ModelTransform.pivot(0F, 0F, 0F));
-
-        return TexturedModelData.of(modelData, 64, 64);
+        LivingEntity entityIn = entity;
+        EntityModelData extraData = (EntityModelData) customPredicate.getExtraDataOfType(EntityModelData.class).get(0);
+        head.setRotationX(extraData.headPitch * ((float) Math.PI / 180F));
+        head.setRotationY(extraData.netHeadYaw * ((float) Math.PI / 180F));
     }
 
     @Override
-    public void setAngles(MiniNaryEntity entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
+    public Identifier getModelResource(MiniNaryEntity object) {
+        return new Identifier(MiniNary.MOD_ID, "geo/mini_nary.geo.json");
     }
 
     @Override
-    public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha) {
-        ImmutableList.of(this.base).forEach((modelRenderer) -> {
-            modelRenderer.render(matrices, vertices, light, overlay, red, green, blue, alpha);
-        });
+    public Identifier getTextureResource(MiniNaryEntity object) {
+
+        return new Identifier(MiniNary.MOD_ID, "textures/model/entity/mini_nary/mini_" + object.getExtension() + ".png");
+    }
+
+    @Override
+    public Identifier getAnimationResource(MiniNaryEntity animatable) {
+        return new Identifier(MiniNary.MOD_ID, "animations/mini_nary.animation.json");
     }
 }

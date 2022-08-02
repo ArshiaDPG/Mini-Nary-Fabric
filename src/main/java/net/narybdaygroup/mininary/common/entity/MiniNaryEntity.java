@@ -1,19 +1,21 @@
 package net.narybdaygroup.mininary.common.entity;
 
-import com.google.common.collect.ImmutableList;
 import net.minecraft.block.BlockState;
+import net.minecraft.entity.EntityDimensions;
+import net.minecraft.entity.EntityPose;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.Flutterer;
-import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.ai.control.MoveControl;
-import net.minecraft.entity.ai.goal.Goal;
+import net.minecraft.entity.ai.goal.*;
 import net.minecraft.entity.attribute.DefaultAttributeContainer;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.mob.GhastEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.mob.PathAwareEntity;
-import net.minecraft.entity.passive.BatEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemConvertible;
+import net.minecraft.item.Items;
+import net.minecraft.recipe.Ingredient;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.BlockPos;
@@ -22,19 +24,43 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
+import software.bernie.geckolib3.core.IAnimatable;
+import software.bernie.geckolib3.core.IAnimationTickable;
+import software.bernie.geckolib3.core.PlayState;
+import software.bernie.geckolib3.core.builder.AnimationBuilder;
+import software.bernie.geckolib3.core.controller.AnimationController;
+import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
+import software.bernie.geckolib3.core.manager.AnimationData;
+import software.bernie.geckolib3.core.manager.AnimationFactory;
 
 import java.util.EnumSet;
 
-public class MiniNaryEntity extends PathAwareEntity implements Flutterer {
+public class MiniNaryEntity extends PathAwareEntity implements Flutterer, IAnimatable, IAnimationTickable {
 
-    protected static final ImmutableList<MemoryModuleType<?>> MEMORY_MODULES;
     public static final int field_28637 = MathHelper.ceil(2.4166098F);
+    private AnimationFactory factory = new AnimationFactory(this);
+    public static String textureExtender;
+
+    protected void initGoals() {
+        this.goalSelector.add(0, new SwimGoal(this));
+        this.goalSelector.add(1, new EscapeDangerGoal(this, 1.25D));
+        this.goalSelector.add(4, new TemptGoal(this, 1.2D, Ingredient.ofItems(new ItemConvertible[]{Items.COCOA_BEANS}), false));
+        this.goalSelector.add(5, new MiniNaryEntity.FlyRandomlyGoal(this));
+        this.goalSelector.add(6, new WanderAroundFarGoal(this, 1.0D));
+        this.goalSelector.add(7, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
+        this.goalSelector.add(8, new LookAroundGoal(this));
+    }
 
     public MiniNaryEntity(EntityType<? extends PathAwareEntity> entityType, World world) {
         super(entityType, world);
         this.experiencePoints = 7;
         this.moveControl = new MiniNaryEntity.MiniNaryMoveControl(this);
+        this.textureExtender = Types.randomizeExtension(world.getRandom());
 
+    }
+
+    public String getExtension() {
+        return this.textureExtender;
     }
     public boolean canAvoidTraps() {
         return true;
@@ -42,15 +68,16 @@ public class MiniNaryEntity extends PathAwareEntity implements Flutterer {
     public boolean hasWings() {
         return this.age % field_28637 == 0;
     }
-    protected void initGoals() {
-        this.goalSelector.add(5, new MiniNaryEntity.FlyRandomlyGoal(this));
-    }
+
 
     public static DefaultAttributeContainer.Builder createMiniNaryAttributes() {
         return MobEntity.createMobAttributes().add(EntityAttributes.GENERIC_MAX_HEALTH, 10.0D).add(EntityAttributes.GENERIC_FLYING_SPEED, 0.6000000238418579D).add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.30000001192092896D).add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 2.0D).add(EntityAttributes.GENERIC_FOLLOW_RANGE, 48.0D);
     }
     public boolean handleFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
         return false;
+    }
+    protected float getActiveEyeHeight(EntityPose pose, EntityDimensions dimensions) {
+        return 0.6F;
     }
     protected SoundEvent getAmbientSound() {
         return null;
@@ -76,17 +103,32 @@ public class MiniNaryEntity extends PathAwareEntity implements Flutterer {
         return !this.onGround;
     }
 
-
-    static {
-        MEMORY_MODULES = ImmutableList.of(MemoryModuleType.PATH, MemoryModuleType.LOOK_TARGET, MemoryModuleType.VISIBLE_MOBS, MemoryModuleType.WALK_TARGET, MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE, MemoryModuleType.HURT_BY, MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM, MemoryModuleType.LIKED_PLAYER, MemoryModuleType.LIKED_NOTEBLOCK, MemoryModuleType.LIKED_NOTEBLOCK_COOLDOWN_TICKS, MemoryModuleType.ITEM_PICKUP_COOLDOWN_TICKS, MemoryModuleType.IS_PANICKING);
-    }
-
-
-
-
     boolean isWithinDistance(BlockPos pos, int distance) {
         return pos.isWithinDistance(this.getBlockPos(), distance);
     }
+
+
+    @Override
+    public void registerControllers(AnimationData data) {
+        data.addAnimationController(new AnimationController<MiniNaryEntity>(this, "controller", 0, this::predicate));
+    }
+    private <E extends IAnimatable> PlayState predicate(AnimationEvent<E> event) {
+        event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.mini_nary.idle", true));
+
+
+        return PlayState.CONTINUE;
+    }
+
+    @Override
+    public AnimationFactory getFactory() {
+        return this.factory;
+    }
+
+    @Override
+    public int tickTimer() {
+        return age;
+    }
+
 
     static class MiniNaryMoveControl extends MoveControl {
         private final MiniNaryEntity nary;
@@ -161,4 +203,21 @@ public class MiniNaryEntity extends PathAwareEntity implements Flutterer {
             this.nary.getMoveControl().moveTo(d, e, f, 1.0);
         }
     }
+}
+enum Types {
+    NARY("nary");
+
+
+    private final String identifier;
+    Types(String identifier){
+        this.identifier = identifier;
+    }
+
+
+
+    public static String randomizeExtension(Random random){
+        Types[] directions = values();
+        return directions[random.nextInt(directions.length)].identifier;
+    }
+
 }

@@ -17,11 +17,14 @@ public class MiniNaryClient implements ClientModInitializer {
     public static final EntityModelLayer MINI_NARY_LAYER = new EntityModelLayer(new Identifier(MiniNary.MOD_ID, "mini_nary"), "main");
     @Override
     public void onInitializeClient() {
-        // In 1.17, use EntityRendererRegistry.register (seen below) instead of EntityRendererRegistry.INSTANCE.register (seen above)
-        EntityRendererRegistry.register(MNEntities.MINI_NARY, (context) -> {
-            return new MiniNaryEntityRenderer(context);
-        });
+//        // In 1.17, use EntityRendererRegistry.register (seen below) instead of EntityRendererRegistry.INSTANCE.register (seen above)
+//        EntityRendererRegistry.register(MNEntities.MINI_NARY, (context) -> {
+//            return new MiniNaryEntityRenderer(context);
+//        });
+//        EntityModelLayerRegistry.registerModelLayer(MINI_NARY_LAYER, MiniNaryEntityModel::getTexturedModelData);
 
-        EntityModelLayerRegistry.registerModelLayer(MINI_NARY_LAYER, MiniNaryEntityModel::getTexturedModelData);
+
+        EntityRendererRegistry.register(MNEntities.MINI_NARY, MiniNaryEntityRenderer::new);
+
     }
 }
