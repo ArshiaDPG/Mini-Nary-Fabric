@@ -29,7 +29,6 @@ public class MiniNaryEntityModel extends AnimatedTickingGeoModel<MiniNaryEntity>
 
     @Override
     public Identifier getTextureResource(MiniNaryEntity object) {
-
         return new Identifier(MiniNary.MOD_ID, "textures/entity/mini_nary/mini_" + object.getExtension() + ".png");
     }
 

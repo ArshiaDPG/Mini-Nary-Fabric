@@ -13,7 +13,7 @@ public class MNEntities {
     public static final EntityType<MiniNaryEntity> MINI_NARY = Registry.register(
             Registry.ENTITY_TYPE,
             new Identifier(MiniNary.MOD_ID, "mini_nary"),
-            FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, MiniNaryEntity::new).dimensions(EntityDimensions.fixed(0.75f, 0.75f)).build()
+            FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, MiniNaryEntity::new).dimensions(EntityDimensions.fixed(0.6f, 1.5f)).build()
     );
 
     public static void init(){
