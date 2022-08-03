@@ -5,7 +5,7 @@
 			"loop": true,
 			"animation_length": 2.08,
 			"bones": {
-				"body": {
+				"top_half": {
 					"rotation": {
 						"0.0": {
 							"vector": [5, 0, 0]
@@ -248,7 +248,7 @@
 						}
 					}
 				},
-				"mini_nary": {
+				"body": {
 					"position": {
 						"0.0": {
 							"vector": [0, 1, 0]
@@ -269,7 +269,7 @@
 			"loop": true,
 			"animation_length": 2.08,
 			"bones": {
-				"mini_nary": {
+				"body": {
 					"rotation": {
 						"0.0": {
 							"vector": [30, 0, 0]
@@ -292,7 +292,7 @@
 						}
 					}
 				},
-				"body": {
+				"top_half": {
 					"rotation": {
 						"0.0": {
 							"vector": [0, 0, 0]

@@ -1,11 +1,15 @@
 package net.narybdaygroup.mininary.common.init;
 
+import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
+import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
+import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
 import net.minecraft.entity.EntityDimensions;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.biome.BiomeKeys;
 import net.narybdaygroup.mininary.MiniNary;
 import net.narybdaygroup.mininary.common.entity.MiniNaryEntity;
 
@@ -17,6 +21,7 @@ public class MNEntities {
     );
 
     public static void init(){
-//        MiniNaryEntity.createMiniNaryAttributes();
+        FabricDefaultAttributeRegistry.register(MNEntities.MINI_NARY, MiniNaryEntity.createMiniNaryAttributes());
+        BiomeModifications.addSpawn(BiomeSelectors.includeByKey(BiomeKeys.FLOWER_FOREST), SpawnGroup.CREATURE, MINI_NARY, 1, 1, 1);
     }
 }

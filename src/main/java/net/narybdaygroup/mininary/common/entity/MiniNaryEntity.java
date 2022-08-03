@@ -36,6 +36,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.intprovider.UniformIntProvider;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
+import net.narybdaygroup.mininary.common.init.MNBlocks;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.IAnimationTickable;
@@ -59,16 +60,16 @@ public class MiniNaryEntity extends TameableEntity implements Flutterer, IAnimat
     @Nullable
     private UUID angryAt;
     private static final TrackedData<Integer> ANGER_TIME;
+    private static final Ingredient BREEDING_INGREDIENT = Ingredient.ofItems(Items.CAKE, MNBlocks.NARY_CAKE);
+    boolean objectPermanence = false;
 
 
 
     protected void initGoals() {
         this.goalSelector.add(0, new SwimGoal(this));
         this.goalSelector.add(1, new EscapeDangerGoal(this, 1.25D));
-        this.goalSelector.add(2, new MeleeAttackGoal(this, 1.0D, true));
-        this.goalSelector.add(4, new TemptGoal(this, 1.2D, Ingredient.ofItems(Items.COCOA_BEANS), false));
-//        this.goalSelector.add(5, new MiniNaryEntity.FlyRandomlyGoal(this));
-        this.goalSelector.add(6, new FollowOwnerGoal(this, 1.0D, 10.0F, 2.0F, false));
+        this.goalSelector.add(2, new FollowOwnerGoal(this, 1.0D, 10.0F, 2.0F, true));
+        this.goalSelector.add(4, new TemptGoal(this, 1.2D, BREEDING_INGREDIENT, false));
         this.goalSelector.add(6, new WanderAroundFarGoal(this, 1.0D));
         this.goalSelector.add(7, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
         this.goalSelector.add(8, new LookAroundGoal(this));
@@ -76,11 +77,12 @@ public class MiniNaryEntity extends TameableEntity implements Flutterer, IAnimat
         this.targetSelector.add(2, new AttackWithOwnerGoal(this));
         this.targetSelector.add(3, (new RevengeGoal(this, new Class[0])).setGroupRevenge(new Class[0]));
 //        this.targetSelector.add(4, new ActiveTargetGoal(this, PlayerEntity.class, 10, true, false, this::shouldAngerAt));
-        this.targetSelector.add(5, new UntamedActiveTargetGoal(this, AnimalEntity.class, false, FOLLOW_TAMED_PREDICATE));
-        this.targetSelector.add(6, new UntamedActiveTargetGoal(this, TurtleEntity.class, false, TurtleEntity.BABY_TURTLE_ON_LAND_FILTER));
-        this.targetSelector.add(7, new ActiveTargetGoal(this, AbstractSkeletonEntity.class, false));
+        this.targetSelector.add(5, new UntamedActiveTargetGoal(this, AnimalEntity.class, objectPermanence, FOLLOW_TAMED_PREDICATE));
+        this.targetSelector.add(6, new UntamedActiveTargetGoal(this, TurtleEntity.class, objectPermanence, TurtleEntity.BABY_TURTLE_ON_LAND_FILTER));
+        this.targetSelector.add(7, new ActiveTargetGoal(this, AbstractSkeletonEntity.class, objectPermanence));
         this.targetSelector.add(8, new UniversalAngerGoal(this, true));
     }
+
 
 
     public MiniNaryEntity(EntityType<? extends PathAwareEntity> entityType, World world) {
@@ -103,12 +105,13 @@ public class MiniNaryEntity extends TameableEntity implements Flutterer, IAnimat
 
     protected void initDataTracker() {
         super.initDataTracker();
+        this.dataTracker.startTracking(ANGER_TIME, 0);
     }
     public static DefaultAttributeContainer.Builder createMiniNaryAttributes() {
         return MobEntity.createMobAttributes()
                 .add(EntityAttributes.GENERIC_MAX_HEALTH, 10.0D)
-                .add(EntityAttributes.GENERIC_FLYING_SPEED, 0.6000000238418579D)
-                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.30000001192092896D)
+                .add(EntityAttributes.GENERIC_FLYING_SPEED, 0.6D)
+                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.6D)
                 .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 4.0D)
                 .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 48.0D);
     }
@@ -120,7 +123,7 @@ public class MiniNaryEntity extends TameableEntity implements Flutterer, IAnimat
     }
 
     protected SoundEvent getAmbientSound() {
-        return null;
+        return SoundEvents.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM;
     }
 
     protected SoundEvent getHurtSound(DamageSource source) {
@@ -144,13 +147,13 @@ public class MiniNaryEntity extends TameableEntity implements Flutterer, IAnimat
     }
 
     public boolean isBreedingItem(ItemStack stack) {
-        return stack.isOf(Items.CAKE);
+        return stack.isOf(MNBlocks.NARY_CAKE.asItem());
     }
     public ActionResult interactMob(PlayerEntity player, Hand hand) {
         ItemStack itemStack = player.getStackInHand(hand);
         Item item = itemStack.getItem();
         if (this.world.isClient) {
-            boolean bl = this.isOwner(player) || this.isTamed() || itemStack.isOf(Items.BONE) && !this.isTamed() && !this.hasAngerTime();
+            boolean bl = this.isOwner(player) || this.isTamed() || itemStack.isOf(MNBlocks.NARY_CAKE.asItem()) && !this.isTamed() && !this.hasAngerTime();
             return bl ? ActionResult.CONSUME : ActionResult.PASS;
         } else {
             if (this.isTamed()) {
@@ -163,11 +166,10 @@ public class MiniNaryEntity extends TameableEntity implements Flutterer, IAnimat
                     return ActionResult.SUCCESS;
                 }
 
-            } else if (itemStack.isOf(Items.CAKE) && !this.hasAngerTime()) {
+            } else if (itemStack.isOf(MNBlocks.NARY_CAKE.asItem()) && !this.hasAngerTime()) {
                 if (!player.getAbilities().creativeMode) {
                     itemStack.decrement(1);
                 }
-
                 if (this.random.nextInt(3) == 0) {
                     this.setOwner(player);
                     this.navigation.stop();
@@ -306,8 +308,7 @@ public class MiniNaryEntity extends TameableEntity implements Flutterer, IAnimat
     }
 }
 enum Types {
-    NARY("nary"),
-    TALON("talon");
+    NARY("nary");
 
 
     private final String identifier;

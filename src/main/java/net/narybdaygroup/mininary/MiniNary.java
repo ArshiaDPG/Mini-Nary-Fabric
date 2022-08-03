@@ -1,8 +1,7 @@
 package net.narybdaygroup.mininary;
 
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
-import net.narybdaygroup.mininary.common.entity.MiniNaryEntity;
+import net.narybdaygroup.mininary.common.init.MNBlocks;
 import net.narybdaygroup.mininary.common.init.MNEntities;
 import net.narybdaygroup.mininary.common.init.MNItems;
 
@@ -11,8 +10,8 @@ public class MiniNary implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        FabricDefaultAttributeRegistry.register(MNEntities.MINI_NARY, MiniNaryEntity.createMiniNaryAttributes());
 
+        MNBlocks.init();
         MNEntities.init();
         MNItems.init();
     }
