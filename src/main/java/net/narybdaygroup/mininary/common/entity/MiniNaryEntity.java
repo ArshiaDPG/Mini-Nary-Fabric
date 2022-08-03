@@ -234,7 +234,7 @@ public class MiniNaryEntity extends TameableEntity implements Flutterer, IAnimat
     }
 
     public int getAngerTime() {
-        return (Integer)this.dataTracker.get(ANGER_TIME);
+        return this.dataTracker.get(ANGER_TIME);
     }
 
     public void setAngerTime(int angerTime) {
@@ -313,10 +313,6 @@ enum Types {
     private final String identifier;
     Types(String identifier){
         this.identifier = identifier;
-    }
-
-    public static String getName(Types types){
-        return types.identifier;
     }
 
 
