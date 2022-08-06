@@ -36,6 +36,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.intprovider.UniformIntProvider;
 import net.minecraft.world.World;
 import net.narybdaygroup.mininary.common.init.MNBlocks;
+import net.narybdaygroup.mininary.common.init.MNItems;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.IAnimationTickable;
@@ -67,7 +68,7 @@ public class MiniNaryEntity extends TameableEntity implements Flutterer, IAnimat
     // This list can be expanded simply using
     // MiniNaryEntity.NARY_TYPES.add("skin_name");
     public static List<String> NARY_TYPES = List.of("nary");
-    private final String SELECTED_TYPE;
+    private static String SELECTED_TYPE;
 
 
 
@@ -108,6 +109,7 @@ public class MiniNaryEntity extends TameableEntity implements Flutterer, IAnimat
     public boolean hasWings() {
         return this.age % field_28637 == 0;
     }
+
 
     protected void initDataTracker() {
         super.initDataTracker();
@@ -188,9 +190,16 @@ public class MiniNaryEntity extends TameableEntity implements Flutterer, IAnimat
 
                 return ActionResult.SUCCESS;
             }
+            if (itemStack.isOf(MNItems.TALONS_TALON)){
+                itemStack.decrement(1);
+                setType("talon");
+            }
 
             return super.interactMob(player, hand);
         }
+    }
+    public static void setType(String name){
+        SELECTED_TYPE = name;
     }
 
 

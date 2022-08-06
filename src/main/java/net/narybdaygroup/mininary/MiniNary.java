@@ -4,6 +4,7 @@ import net.fabricmc.api.ModInitializer;
 import net.narybdaygroup.mininary.common.init.MNBlocks;
 import net.narybdaygroup.mininary.common.init.MNEntities;
 import net.narybdaygroup.mininary.common.init.MNItems;
+import net.narybdaygroup.mininary.common.init.MNLootTableModifiers;
 
 public class MiniNary implements ModInitializer {
     public static final String MOD_ID = "mininary";
@@ -14,5 +15,6 @@ public class MiniNary implements ModInitializer {
         MNBlocks.init();
         MNEntities.init();
         MNItems.init();
+        MNLootTableModifiers.modifyLootTables();
     }
 }
