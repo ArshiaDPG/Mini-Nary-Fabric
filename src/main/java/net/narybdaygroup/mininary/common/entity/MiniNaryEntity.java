@@ -14,16 +14,14 @@ import net.minecraft.entity.mob.AbstractSkeletonEntity;
 import net.minecraft.entity.mob.Angerable;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.mob.PathAwareEntity;
-import net.minecraft.entity.passive.AnimalEntity;
-import net.minecraft.entity.passive.PassiveEntity;
-import net.minecraft.entity.passive.TameableEntity;
-import net.minecraft.entity.passive.TurtleEntity;
+import net.minecraft.entity.passive.*;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.recipe.Ingredient;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ActionResult;
@@ -48,6 +46,7 @@ import software.bernie.geckolib3.core.manager.AnimationData;
 import software.bernie.geckolib3.core.manager.AnimationFactory;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Predicate;
 
@@ -67,9 +66,9 @@ public class MiniNaryEntity extends TameableEntity implements Flutterer, IAnimat
 
     // This list can be expanded simply using
     // MiniNaryEntity.NARY_TYPES.add("skin_name");
-    public static List<String> NARY_TYPES = List.of("nary");
-    private static String SELECTED_TYPE;
 
+    public static List<String> NARY_TYPES = List.of("nary", "nary_disco");
+    private static TrackedData<String> SELECTED_TYPE;
 
 
     protected void initGoals() {
@@ -96,12 +95,12 @@ public class MiniNaryEntity extends TameableEntity implements Flutterer, IAnimat
         super((EntityType<? extends TameableEntity>) entityType, world);
         this.experiencePoints = 7;
         this.moveControl = new MiniNaryEntity.MiniNaryMoveControl(this);
-        SELECTED_TYPE = NARY_TYPES.get(world.getRandom().nextInt(NARY_TYPES.size()));
+        setType(NARY_TYPES.get(world.getRandom().nextInt(NARY_TYPES.size())));
 
     }
 
     public String getExtension() {
-        return this.SELECTED_TYPE;
+        return this.dataTracker.get(SELECTED_TYPE);
     }
     public boolean canAvoidTraps() {
         return true;
@@ -114,6 +113,7 @@ public class MiniNaryEntity extends TameableEntity implements Flutterer, IAnimat
     protected void initDataTracker() {
         super.initDataTracker();
         this.dataTracker.startTracking(ANGER_TIME, 0);
+        this.dataTracker.startTracking(SELECTED_TYPE, "nary");
     }
     public static DefaultAttributeContainer.Builder createMiniNaryAttributes() {
         return MobEntity.createMobAttributes()
@@ -193,13 +193,14 @@ public class MiniNaryEntity extends TameableEntity implements Flutterer, IAnimat
             if (itemStack.isOf(MNItems.TALONS_TALON)){
                 itemStack.decrement(1);
                 setType("talon");
+                this.playSound(SoundEvents.ENTITY_MOOSHROOM_CONVERT, 2.0F, 1.0F);
             }
 
             return super.interactMob(player, hand);
         }
     }
-    public static void setType(String name){
-        SELECTED_TYPE = name;
+    public void setType(String name){
+        this.dataTracker.set(SELECTED_TYPE, name);
     }
 
 
@@ -313,6 +314,7 @@ public class MiniNaryEntity extends TameableEntity implements Flutterer, IAnimat
 
 
     static {
+        SELECTED_TYPE = DataTracker.registerData(MiniNaryEntity.class, TrackedDataHandlerRegistry.STRING);
         ANGER_TIME = DataTracker.registerData(MiniNaryEntity.class, TrackedDataHandlerRegistry.INTEGER);
         FOLLOW_TAMED_PREDICATE = (entity) -> {
             EntityType<?> entityType = entity.getType();
