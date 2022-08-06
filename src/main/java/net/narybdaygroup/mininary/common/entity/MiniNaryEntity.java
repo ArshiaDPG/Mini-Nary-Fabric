@@ -34,7 +34,6 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.intprovider.UniformIntProvider;
-import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 import net.narybdaygroup.mininary.common.init.MNBlocks;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +46,7 @@ import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.manager.AnimationData;
 import software.bernie.geckolib3.core.manager.AnimationFactory;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Predicate;
 
@@ -56,12 +56,18 @@ public class MiniNaryEntity extends TameableEntity implements Flutterer, IAnimat
     private AnimationFactory factory = new AnimationFactory(this);
     public static final Predicate<LivingEntity> FOLLOW_TAMED_PREDICATE;
     private static final UniformIntProvider ANGER_TIME_RANGE;
-    private final String TEXTURE;
+
     @Nullable
     private UUID angryAt;
     private static final TrackedData<Integer> ANGER_TIME;
     private static final Ingredient BREEDING_INGREDIENT = Ingredient.ofItems(Items.CAKE, MNBlocks.NARY_CAKE);
     boolean objectPermanence = false;
+
+
+    // This list can be expanded simply using
+    // MiniNaryEntity.NARY_TYPES.add("skin_name");
+    public static List<String> NARY_TYPES = List.of("nary");
+    private final String SELECTED_TYPE;
 
 
 
@@ -89,12 +95,12 @@ public class MiniNaryEntity extends TameableEntity implements Flutterer, IAnimat
         super((EntityType<? extends TameableEntity>) entityType, world);
         this.experiencePoints = 7;
         this.moveControl = new MiniNaryEntity.MiniNaryMoveControl(this);
-        TEXTURE = Types.randomizeExtension(world.getRandom());
+        SELECTED_TYPE = NARY_TYPES.get(world.getRandom().nextInt(NARY_TYPES.size()));
 
     }
 
     public String getExtension() {
-        return this.TEXTURE;
+        return this.SELECTED_TYPE;
     }
     public boolean canAvoidTraps() {
         return true;
@@ -193,8 +199,7 @@ public class MiniNaryEntity extends TameableEntity implements Flutterer, IAnimat
         data.addAnimationController(new AnimationController<MiniNaryEntity>(this, "controller", 0, this::predicate));
     }
     private <E extends IAnimatable> PlayState predicate(AnimationEvent<E> event) {
-        event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.mini_nary.idle", true));
-
+            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.mini_nary.idle", true));
 
         return PlayState.CONTINUE;
     }
@@ -306,21 +311,4 @@ public class MiniNaryEntity extends TameableEntity implements Flutterer, IAnimat
         };
         ANGER_TIME_RANGE = TimeHelper.betweenSeconds(20, 39);
     }
-}
-enum Types {
-    NARY("nary");
-
-
-    private final String identifier;
-    Types(String identifier){
-        this.identifier = identifier;
-    }
-
-
-
-    public static String randomizeExtension(Random random){
-        Types[] types = values();
-        return types[random.nextInt(types.length)].identifier;
-    }
-
 }

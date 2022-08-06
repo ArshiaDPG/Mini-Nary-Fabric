@@ -8,7 +8,7 @@ import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 import net.narybdaygroup.mininary.MiniNary;
-import net.narybdaygroup.mininary.common.blocks.ChocolateCakeBlock;
+import net.narybdaygroup.mininary.common.blocks.NaryCakeBlock;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -31,7 +31,7 @@ public class MNBlocks {
         return Registry.register(Registry.BLOCK, new Identifier(MiniNary.MOD_ID, blockID), block);
     }
     
-    public static final Block NARY_CAKE = createBlockWithItem("nary_cake", new ChocolateCakeBlock(AbstractBlock.Settings.of(Material.CAKE).strength(0.5F).sounds(BlockSoundGroup.WOOL)), ItemGroup.FOOD);
+    public static final Block NARY_CAKE = createBlockWithItem("nary_cake", new NaryCakeBlock(AbstractBlock.Settings.of(Material.CAKE).strength(0.5F).sounds(BlockSoundGroup.WOOL)), ItemGroup.FOOD);
 
     public static void init(){
 //        CANDLES.forEach(block ->

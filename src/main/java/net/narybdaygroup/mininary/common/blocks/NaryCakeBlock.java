@@ -20,12 +20,12 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
 import net.minecraft.world.WorldView;
 
-public class ChocolateCakeBlock extends Block {
+public class NaryCakeBlock extends Block {
     public static final VoxelShape CAKE_SHAPE;
     public static final VoxelShape CANDLE_SHAPE;
     public static final VoxelShape SHAPES;
 
-    public ChocolateCakeBlock(Settings settings) {
+    public NaryCakeBlock(Settings settings) {
         super(settings);
     }
 
